@@ -34,7 +34,7 @@ void sql_init(struct sql_t* sql) {
 	memset(sql, 0, sizeof(*sql));
 }
 
-void sql_cat(struct sql_t* sql, const char* ptr, size_t len, MYSQL* conn) {
+inline void sql_cat(struct sql_t* sql, const char* ptr, size_t len, MYSQL* conn) {
 	size_t need = len;
 	size_t fsz = sql->cap - sql->cur;
 	if (conn)
@@ -115,7 +115,8 @@ int create_cursor(struct lua_State* L, MYSQL_RES* res) {
 		lua_setfield(L, -2, "close");
 	}
 	lua_setmetatable(L, -2);
-	return 1;
+	lua_pushinteger(L, cur->rows);
+	return 2;
 }
 
 /*connection*/
