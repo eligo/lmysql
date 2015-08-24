@@ -139,6 +139,11 @@ int _select(struct lua_State* L) {
 		const char* str = luaL_checklstring(L, 4, &slen);
 		sql_cat(&my->sql, str, slen, NULL);
 	}
+	if (!lua_isnil(L, 5)) {
+		sql_cat(&my->sql, " ", 1, NULL);
+		const char* str = luaL_checklstring(L, 5, &slen);
+		sql_cat(&my->sql, str, slen, NULL);
+	}
 	//printf("sql %s\n", my->sql.ptr);
 	if (mysql_real_query(my->conn, my->sql.ptr, my->sql.cur)) 
 		return l_faildirect(L, mysql_error(my->conn));
