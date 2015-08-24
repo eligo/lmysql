@@ -272,6 +272,27 @@ int _delete(struct lua_State* L) {
 	return 1;
 }
 
+int _execute(struct lua_State* L) {
+	struct mysql_t* my = (struct mysql_t*)luaL_checkudata (L, 1, CNAME_CONNECTION);
+	luaL_argcheck (L, my != NULL, 1, "mysqlconnection expected");
+	size_t slen=0;
+	const char* sql = luaL_checklstring(L, 2, &slen);
+	if (mysql_real_query(my->conn, sql, slen)) 
+		return l_faildirect(L, mysql_error(my->conn));
+	else {
+		MYSQL_RES *res = mysql_store_result(my->conn);
+		unsigned int num_cols = mysql_field_count(my->conn);
+		if (res) {
+			return create_cursor(L, res);
+		}
+		if (num_cols == 0) {
+			lua_pushnumber(L, mysql_affected_rows(my->conn));
+			return 1;
+		} else
+			return l_faildirect(L, mysql_error(my->conn));
+	}
+}
+
 int _connect_close(struct lua_State* L) {
 	struct mysql_t* my = (struct mysql_t*)luaL_checkudata (L, 1, CNAME_CONNECTION);
 	luaL_argcheck (L, my != NULL, 1, "mysqlconnection expected");
@@ -323,6 +344,8 @@ int _connect (struct lua_State *L) {
 		lua_setfield(L, -2, "select");
 		lua_pushcfunction(L, _delete);
 		lua_setfield(L, -2, "delete");
+		lua_pushcfunction(L, _execute);
+		lua_setfield(L, -2, "execute");
 		lua_pushcfunction(L, _connect_close);
 		lua_setfield(L, -2, "close");
 			
